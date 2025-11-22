@@ -12,6 +12,8 @@ function App() {
   const [isFocused, setIsFocused] = useState(false);
   const [sort, setSort] = useState('default');
   const [showNav, setShowNav] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15;
 
   useEffect(() => {
     let lastScrollY = window.scrollY;
@@ -40,6 +42,7 @@ function App() {
     try {
       const res = await axios.get(`http://localhost:8080/api/products?sort=${sortOption}`);
       setProducts(res.data);
+      setCurrentPage(1);
     } catch (err) {
       console.error(err);
     }
@@ -63,6 +66,7 @@ function App() {
       // 1. Search
       const res = await axios.get(`http://localhost:8080/api/search?query=${searchQuery}&sort=${sortOption}`);
       setProducts(res.data);
+      setCurrentPage(1);
 
       // 2. Spell Check if no results or just to show suggestions
       const spellRes = await axios.get(`http://localhost:8080/api/spellcheck?word=${searchQuery}`);
@@ -120,6 +124,55 @@ function App() {
     performSearch(word);
   };
 
+  // Pagination Logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = products.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(products.length / itemsPerPage);
+
+  const paginate = (pageNumber) => {
+    if (pageNumber > 0 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const renderPagination = (extraClass = '') => (
+    <div className={`pagination ${extraClass}`}>
+      <button 
+        onClick={() => paginate(currentPage - 1)} 
+        disabled={currentPage === 1}
+        className="page-nav-btn"
+      >
+        Previous
+      </button>
+      
+      <span className="page-info">
+        Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
+      </span>
+
+      <button 
+        onClick={() => paginate(currentPage + 1)} 
+        disabled={currentPage === totalPages}
+        className="page-nav-btn"
+      >
+        Next
+      </button>
+
+      <div className="page-jump">
+        <span>Jump to:</span>
+        <select 
+          value={currentPage} 
+          onChange={(e) => paginate(Number(e.target.value))}
+        >
+          {[...Array(totalPages)].map((_, i) => (
+            <option key={i + 1} value={i + 1}>{i + 1}</option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+
   return (
     <div className="App">
       <header className={`App-header ${showNav ? '' : 'hidden'}`}>
@@ -150,6 +203,7 @@ function App() {
             </ul>
           )}
         </div>
+        {!loading && products.length > 0 && renderPagination('header-pagination')}
       </header>
 
       <main>
@@ -164,23 +218,27 @@ function App() {
         )}
 
         <div className="content-wrapper">
-          <div className="product-list">
-            {loading ? <p>Loading...</p> : products.map((p, i) => (
-              <div key={i} className="product-card">
-                <img src={p.imageUrl} alt={p.name} />
-                <div className="product-info">
-                  <h3>{p.name}</h3>
-                  <p className="brand">{p.brand}</p>
-                  <p className="price">{p.price}</p>
-                  <p className="rating">Rating: {p.rating} ({p.reviewCount} reviews)</p>
-                  <p className="desc">{p.description.substring(0, 100)}...</p>
-                  <a href={p.productUrl} target="_blank" rel="noreferrer">View Product</a>
+          <div className="main-column">
+            <div className="product-list">
+              {loading ? <p>Loading...</p> : currentItems.map((p, i) => (
+                <div key={i} className="product-card">
+                  <img src={p.imageUrl} alt={p.name} />
+                  <div className="product-info">
+                    <h3>{p.name}</h3>
+                    <p className="brand">{p.brand}</p>
+                    <p className="price">{p.price}</p>
+                    <p className="rating">Rating: {p.rating} ({p.reviewCount} reviews)</p>
+                    <p className="desc">{p.description.substring(0, 100)}...</p>
+                    <a href={p.productUrl} target="_blank" rel="noreferrer">View Product</a>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+            
+            {!loading && products.length > 0 && renderPagination()}
           </div>
 
-          <aside className="sidebar">
+          <aside className={`sidebar ${showNav ? '' : 'move-up'}`}>
             <h3>Top Searches</h3>
             <ul>
               {topSearches.map((s, i) => (
