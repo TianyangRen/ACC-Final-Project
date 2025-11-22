@@ -52,8 +52,8 @@ public class SearchEngineService {
 
     private void buildVocabulary() {
         for (Product p : products) {
-            // Add words from name and description to Trie
-            String text = p.getName() + " " + p.getDescription();
+            // Add words from name ONLY to Trie
+            String text = p.getName();
             String[] words = text.toLowerCase().split("\\W+");
             for (String word : words) {
                 if (!word.isEmpty()) {
@@ -80,11 +80,11 @@ public class SearchEngineService {
             
             String finalWord = word;
             suggestions = allWords.stream()
-                .sorted((w1, w2) -> Integer.compare(
-                    EditDistance.calculate(finalWord, w1),
-                    EditDistance.calculate(finalWord, w2)
-                ))
+                .map(w -> new AbstractMap.SimpleEntry<>(w, EditDistance.calculate(finalWord, w)))
+                .filter(entry -> entry.getValue() <= 2) // Filter out words with edit distance > 2
+                .sorted(Map.Entry.comparingByValue())
                 .limit(5)
+                .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
             
             result.put("suggestions", suggestions);
@@ -138,7 +138,7 @@ public class SearchEngineService {
         for (Object obj : candidates) {
             if (obj instanceof Product) {
                 Product p = (Product) obj;
-                String text = (p.getName() + " " + p.getDescription()).toLowerCase();
+                String text = p.getName().toLowerCase();
                 int score = bm.countOccurrences(text);
                 productScores.put(p, score);
             }

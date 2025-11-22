@@ -36,18 +36,17 @@ function App() {
     }
   };
 
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!query) return;
+  const performSearch = async (searchQuery) => {
+    if (!searchQuery) return;
     setLoading(true);
     setSpellCheck(null);
     try {
       // 1. Search
-      const res = await axios.get(`http://localhost:8080/api/search?query=${query}`);
+      const res = await axios.get(`http://localhost:8080/api/search?query=${searchQuery}`);
       setProducts(res.data);
 
       // 2. Spell Check if no results or just to show suggestions
-      const spellRes = await axios.get(`http://localhost:8080/api/spellcheck?word=${query}`);
+      const spellRes = await axios.get(`http://localhost:8080/api/spellcheck?word=${searchQuery}`);
       if (!spellRes.data.exists) {
         setSpellCheck(spellRes.data.suggestions);
       }
@@ -57,6 +56,11 @@ function App() {
       console.error(err);
     }
     setLoading(false);
+  };
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    performSearch(query);
   };
 
   const handleInputChange = async (e) => {
@@ -77,8 +81,7 @@ function App() {
   const handleSuggestionClick = (word) => {
     setQuery(word);
     setSuggestions([]);
-    // Trigger search
-    // handleSearch({ preventDefault: () => {} }); // Need to refactor to call search logic
+    performSearch(word);
   };
 
   return (
@@ -112,7 +115,7 @@ function App() {
           <div className="spell-check">
             <p>Did you mean: 
               {spellCheck.map((s, i) => (
-                <span key={i} className="suggestion" onClick={() => {setQuery(s); setSpellCheck(null);}}>{s} </span>
+                <span key={i} className="suggestion" onClick={() => {setQuery(s); setSpellCheck(null); performSearch(s);}}>{s} </span>
               ))}
             </p>
           </div>
