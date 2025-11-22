@@ -17,13 +17,13 @@ public class SearchController {
     private SearchEngineService searchService;
 
     @GetMapping("/products")
-    public List<Product> getAllProducts() {
-        return searchService.getAllProducts();
+    public List<Product> getAllProducts(@RequestParam(required = false, defaultValue = "default") String sort) {
+        return searchService.getAllProducts(sort);
     }
 
     @GetMapping("/search")
-    public List<Product> search(@RequestParam String query) {
-        return searchService.searchProducts(query);
+    public List<Product> search(@RequestParam String query, @RequestParam(required = false, defaultValue = "default") String sort) {
+        return searchService.searchProducts(query, sort);
     }
 
     @GetMapping("/spellcheck")

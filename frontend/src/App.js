@@ -10,16 +10,35 @@ function App() {
   const [topSearches, setTopSearches] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [sort, setSort] = useState('default');
+  const [showNav, setShowNav] = useState(true);
+
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setShowNav(false);
+      } else {
+        setShowNav(true);
+      }
+      lastScrollY = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     fetchProducts();
     fetchTopSearches();
   }, []);
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (sortOption = sort) => {
     setLoading(true);
     try {
-      const res = await axios.get('http://localhost:8080/api/products');
+      const res = await axios.get(`http://localhost:8080/api/products?sort=${sortOption}`);
       setProducts(res.data);
     } catch (err) {
       console.error(err);
@@ -36,13 +55,13 @@ function App() {
     }
   };
 
-  const performSearch = async (searchQuery) => {
+  const performSearch = async (searchQuery, sortOption = sort) => {
     if (!searchQuery) return;
     setLoading(true);
     setSpellCheck(null);
     try {
       // 1. Search
-      const res = await axios.get(`http://localhost:8080/api/search?query=${searchQuery}`);
+      const res = await axios.get(`http://localhost:8080/api/search?query=${searchQuery}&sort=${sortOption}`);
       setProducts(res.data);
 
       // 2. Spell Check if no results or just to show suggestions
@@ -61,6 +80,23 @@ function App() {
   const handleSearch = async (e) => {
     e.preventDefault();
     performSearch(query);
+  };
+
+  const handleSortChange = (e) => {
+    const newSort = e.target.value;
+    setSort(newSort);
+    if (query) {
+      performSearch(query, newSort);
+    } else {
+      fetchProducts(newSort);
+    }
+  };
+
+  const handleShowAll = () => {
+    setQuery('');
+    setSuggestions([]);
+    setSpellCheck(null);
+    fetchProducts(sort);
   };
 
   const handleInputChange = async (e) => {
@@ -86,9 +122,15 @@ function App() {
 
   return (
     <div className="App">
-      <header className="App-header">
+      <header className={`App-header ${showNav ? '' : 'hidden'}`}>
         <h1>Toothbrush Analyzer</h1>
         <div className="search-container">
+          <button className="show-all-btn" onClick={handleShowAll}>All</button>
+          <select value={sort} onChange={handleSortChange} className="sort-select">
+            <option value="default">Default</option>
+            <option value="price_asc">Price: Low to High</option>
+            <option value="price_desc">Price: High to Low</option>
+          </select>
           <form onSubmit={handleSearch}>
             <input
               type="text"
@@ -142,7 +184,10 @@ function App() {
             <h3>Top Searches</h3>
             <ul>
               {topSearches.map((s, i) => (
-                <li key={i}>{s.term}: {s.count}</li>
+                <li key={i} onClick={() => handleSuggestionClick(s.term)}>
+                  <span>{s.term}</span>
+                  <span>{s.count}</span>
+                </li>
               ))}
             </ul>
           </aside>

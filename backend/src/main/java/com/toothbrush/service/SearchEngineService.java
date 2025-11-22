@@ -63,8 +63,14 @@ public class SearchEngineService {
         }
     }
 
-    public List<Product> getAllProducts() {
-        return products;
+    public List<Product> getAllProducts(String sort) {
+        List<Product> all = new ArrayList<>(products);
+        if ("price_asc".equals(sort)) {
+            all.sort(Comparator.comparingDouble(this::parsePrice));
+        } else if ("price_desc".equals(sort)) {
+            all.sort(Comparator.comparingDouble(this::parsePrice).reversed());
+        }
+        return all;
     }
 
     // Task 1: Spell Checking
@@ -121,7 +127,7 @@ public class SearchEngineService {
     }
 
     // Task 5 & 6: Page Ranking & Inverted Indexing
-    public List<Product> searchProducts(String keyword) {
+    public List<Product> searchProducts(String keyword, String sort) {
         trackSearch(keyword);
         String lowerKeyword = keyword.toLowerCase();
         
@@ -144,11 +150,29 @@ public class SearchEngineService {
             }
         }
 
-        // Sort by score
-        return productScores.entrySet().stream()
+        // Initial sort by score (relevance)
+        List<Product> results = productScores.entrySet().stream()
                 .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
+
+        // Apply additional sorting if requested
+        if ("price_asc".equals(sort)) {
+            results.sort(Comparator.comparingDouble(this::parsePrice));
+        } else if ("price_desc".equals(sort)) {
+            results.sort(Comparator.comparingDouble(this::parsePrice).reversed());
+        }
+
+        return results;
+    }
+
+    private double parsePrice(Product p) {
+        try {
+            String priceStr = p.getPrice().replaceAll("[^\\d.]", "");
+            return Double.parseDouble(priceStr);
+        } catch (NumberFormatException e) {
+            return 0.0;
+        }
     }
 }
 
