@@ -567,3 +567,27 @@ button:active {
   color: #2c3e50;
   margin-bottom: 10px;
 }
+
+.brand-select-items {
+  max-height: 300px;
+  overflow-y: auto;
+  width: 250px;
+}
+
+.brand-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-option input[type="checkbox"] {
+  width: auto;
+  flex-grow: 0;
+  margin: 0;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.brand-option span {
+  flex-grow: 1;
+}

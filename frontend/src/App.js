@@ -12,16 +12,20 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [sort, setSort] = useState('default');
+  const [brands, setBrands] = useState([]);
+  const [selectedBrands, setSelectedBrands] = useState([]);
   const [showNav, setShowNav] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [isSortOpen, setIsSortOpen] = useState(false);
+  const [isBrandOpen, setIsBrandOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [user, setUser] = useState(null);
   const sortRef = useRef(null);
+  const brandRef = useRef(null);
   const itemsPerPage = 15;
 
   const sortOptions = {
-    'default': 'Default',
+    'default': 'Price: Default',
     'price_asc': 'Price: Low to High',
     'price_desc': 'Price: High to Low'
   };
@@ -46,6 +50,7 @@ function App() {
   useEffect(() => {
     fetchProducts();
     fetchTopSearches();
+    fetchBrands();
   }, []);
 
   useEffect(() => {
@@ -53,15 +58,31 @@ function App() {
       if (sortRef.current && !sortRef.current.contains(event.target)) {
         setIsSortOpen(false);
       }
+      if (brandRef.current && !brandRef.current.contains(event.target)) {
+        setIsBrandOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const fetchProducts = async (sortOption = sort) => {
+  const fetchBrands = async () => {
+    try {
+      const res = await axios.get('http://localhost:8080/api/brands');
+      setBrands(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchProducts = async (sortOption = sort, brandFilters = selectedBrands) => {
     setLoading(true);
     try {
-      const res = await axios.get(`http://localhost:8080/api/products?sort=${sortOption}`);
+      const params = { sort: sortOption };
+      if (brandFilters.length > 0) {
+        params.brands = brandFilters.join(',');
+      }
+      const res = await axios.get(`http://localhost:8080/api/products`, { params });
       setProducts(res.data);
       setCurrentPage(1);
     } catch (err) {
@@ -79,15 +100,17 @@ function App() {
     }
   };
 
-  const performSearch = async (searchQuery, sortOption = sort) => {
+  const performSearch = async (searchQuery, sortOption = sort, brandFilters = selectedBrands) => {
     if (!searchQuery) return;
     setLoading(true);
     setSpellCheck(null);
     try {
+      const params = { query: searchQuery, sort: sortOption };
+      if (brandFilters.length > 0) {
+        params.brands = brandFilters.join(',');
+      }
       // 1. Search
-      const res = await axios.get(`http://localhost:8080/api/search`, {
-        params: { query: searchQuery, sort: sortOption }
-      });
+      const res = await axios.get(`http://localhost:8080/api/search`, { params });
       setProducts(res.data);
       setCurrentPage(1);
 
@@ -125,7 +148,8 @@ function App() {
     setQuery('');
     setSuggestions([]);
     setSpellCheck(null);
-    fetchProducts(sort);
+    setSelectedBrands([]);
+    fetchProducts(sort, []);
   };
 
   const handleInputChange = async (e) => {
@@ -158,6 +182,22 @@ function App() {
       performSearch(query, value);
     } else {
       fetchProducts(value);
+    }
+  };
+
+  const handleBrandToggle = (brand) => {
+    let newBrands;
+    if (selectedBrands.includes(brand)) {
+      newBrands = selectedBrands.filter(b => b !== brand);
+    } else {
+      newBrands = [...selectedBrands, brand];
+    }
+    setSelectedBrands(newBrands);
+    
+    if (query) {
+      performSearch(query, sort, newBrands);
+    } else {
+      fetchProducts(sort, newBrands);
     }
   };
 
@@ -225,6 +265,33 @@ function App() {
         <div className="search-container">
           <button className="show-all-btn" onClick={handleShowAll}>All</button>
           
+          <div className="custom-select" ref={brandRef}>
+            <div className="select-selected" onClick={() => setIsBrandOpen(!isBrandOpen)}>
+              {selectedBrands.length > 0 ? `${selectedBrands.length} Brands` : 'Brands: All'}
+            </div>
+            {isBrandOpen && (
+              <div className="select-items brand-select-items">
+                {brands.map((brand) => (
+                  <div 
+                    key={brand} 
+                    className="brand-option"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleBrandToggle(brand);
+                    }}
+                  >
+                    <input 
+                      type="checkbox" 
+                      checked={selectedBrands.includes(brand)} 
+                      readOnly 
+                    />
+                    <span>{brand}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="custom-select" ref={sortRef}>
             <div className="select-selected" onClick={() => setIsSortOpen(!isSortOpen)}>
               {sortOptions[sort]}

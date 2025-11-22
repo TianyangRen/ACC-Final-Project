@@ -16,14 +16,24 @@ public class SearchController {
     @Autowired
     private SearchEngineService searchService;
 
+    @GetMapping("/brands")
+    public List<String> getBrands() {
+        return searchService.getAllBrands();
+    }
+
     @GetMapping("/products")
-    public List<Product> getAllProducts(@RequestParam(required = false, defaultValue = "default") String sort) {
-        return searchService.getAllProducts(sort);
+    public List<Product> getAllProducts(
+            @RequestParam(required = false, defaultValue = "default") String sort,
+            @RequestParam(required = false) List<String> brands) {
+        return searchService.getAllProducts(sort, brands);
     }
 
     @GetMapping("/search")
-    public List<Product> search(@RequestParam String query, @RequestParam(required = false, defaultValue = "default") String sort) {
-        return searchService.searchProducts(query, sort);
+    public List<Product> search(
+            @RequestParam String query, 
+            @RequestParam(required = false, defaultValue = "default") String sort,
+            @RequestParam(required = false) List<String> brands) {
+        return searchService.searchProducts(query, sort, brands);
     }
 
     @GetMapping("/spellcheck")

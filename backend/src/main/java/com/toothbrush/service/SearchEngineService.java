@@ -70,8 +70,22 @@ public class SearchEngineService {
         }
     }
 
-    public List<Product> getAllProducts(String sort) {
-        List<Product> all = new ArrayList<>(products);
+    public List<String> getAllBrands() {
+        return products.stream()
+                .map(Product::getBrand)
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+    }
+
+    public List<Product> getAllProducts(String sort, List<String> brands) {
+        List<Product> all = products.stream()
+                .filter(p -> brands == null || brands.isEmpty() || brands.contains(p.getBrand()))
+                .collect(Collectors.toList());
+
         if ("price_asc".equals(sort)) {
             all.sort(Comparator.comparingDouble(this::parsePrice));
         } else if ("price_desc".equals(sort)) {
@@ -221,7 +235,7 @@ public class SearchEngineService {
     }
 
     // Task 5 & 6: Page Ranking & Inverted Indexing
-    public List<Product> searchProducts(String keyword, String sort) {
+    public List<Product> searchProducts(String keyword, String sort, List<String> brands) {
         trackSearch(keyword);
         String lowerKeyword = keyword.toLowerCase();
         String[] searchWords = lowerKeyword.split("\\W+"); // Split query into words
@@ -255,6 +269,17 @@ public class SearchEngineService {
 
         if (candidateSet.isEmpty()) {
             return new ArrayList<>();
+        }
+
+        // Filter by brand if provided
+        if (brands != null && !brands.isEmpty()) {
+            candidateSet = candidateSet.stream()
+                    .filter(p -> brands.contains(p.getBrand()))
+                    .collect(Collectors.toSet());
+            
+            if (candidateSet.isEmpty()) {
+                return new ArrayList<>();
+            }
         }
 
         // 2. Use Boyer-Moore to rank them by frequency (Task 5)
