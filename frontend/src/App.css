@@ -36,7 +36,11 @@
 
 .App-header h1 {
   margin: 0 0 10px 0;
-  font-size: 24px;
+  font-size: 28px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .App-header.hidden {
@@ -223,6 +227,37 @@ button:active {
   gap: 20px;
   max-width: 1400px;
   margin: 0 auto;
+}
+
+.auth-container {
+  margin-left: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.login-btn, .logout-btn {
+  padding: 10px 15px;
+  background-color: transparent;
+  border: 1px solid #61dafb;
+  color: #61dafb;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.login-btn:hover, .logout-btn:hover {
+  background-color: #61dafb;
+  color: #282c34;
+  transform: none;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: white;
+  font-size: 16px;
 }
 
 .main-column {

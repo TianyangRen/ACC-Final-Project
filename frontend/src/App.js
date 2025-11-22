@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './App.css';
+import LoginModal from './components/LoginModal';
 
 function App() {
   const [query, setQuery] = useState('');
@@ -14,6 +15,8 @@ function App() {
   const [showNav, setShowNav] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [isSortOpen, setIsSortOpen] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [user, setUser] = useState(null);
   const sortRef = useRef(null);
   const itemsPerPage = 15;
 
@@ -152,6 +155,14 @@ function App() {
     }
   };
 
+  const handleLoginSuccess = (username) => {
+    setUser(username);
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
   // Pagination Logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -245,9 +256,27 @@ function App() {
               ))}
             </ul>
           )}
+          
+          <div className="auth-container">
+            {user ? (
+              <div className="user-info">
+                <span>Welcome, {user}</span>
+                <button className="logout-btn" onClick={handleLogout}>Logout</button>
+              </div>
+            ) : (
+              <button className="login-btn" onClick={() => setShowLoginModal(true)}>Login / Register</button>
+            )}
+          </div>
         </div>
         {!loading && products.length > 0 && renderPagination('header-pagination')}
       </header>
+
+      {showLoginModal && (
+        <LoginModal 
+          onClose={() => setShowLoginModal(false)} 
+          onLoginSuccess={handleLoginSuccess} 
+        />
+      )}
 
       <main>
         {spellCheck && spellCheck.length > 0 && (
