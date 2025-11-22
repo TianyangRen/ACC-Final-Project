@@ -85,12 +85,16 @@ function App() {
     setSpellCheck(null);
     try {
       // 1. Search
-      const res = await axios.get(`http://localhost:8080/api/search?query=${searchQuery}&sort=${sortOption}`);
+      const res = await axios.get(`http://localhost:8080/api/search`, {
+        params: { query: searchQuery, sort: sortOption }
+      });
       setProducts(res.data);
       setCurrentPage(1);
 
       // 2. Spell Check if no results or just to show suggestions
-      const spellRes = await axios.get(`http://localhost:8080/api/spellcheck?word=${searchQuery}`);
+      const spellRes = await axios.get(`http://localhost:8080/api/spellcheck`, {
+        params: { word: searchQuery }
+      });
       if (!spellRes.data.exists) {
         setSpellCheck(spellRes.data.suggestions);
       }
@@ -129,7 +133,9 @@ function App() {
     setQuery(val);
     if (val.length > 1) {
       try {
-        const res = await axios.get(`http://localhost:8080/api/autocomplete?prefix=${val}`);
+        const res = await axios.get(`http://localhost:8080/api/autocomplete`, {
+          params: { prefix: val }
+        });
         setSuggestions(res.data);
       } catch (err) {
         console.error(err);
@@ -292,19 +298,28 @@ function App() {
         <div className="content-wrapper">
           <div className="main-column">
             <div className="product-list">
-              {loading ? <p>Loading...</p> : currentItems.map((p, i) => (
-                <div key={i} className="product-card">
-                  <img src={p.imageUrl} alt={p.name} />
-                  <div className="product-info">
-                    <h3>{p.name}</h3>
-                    <p className="brand">{p.brand}</p>
-                    <p className="price">{p.price}</p>
-                    <p className="rating">Rating: {p.rating} ({p.reviewCount} reviews)</p>
-                    <p className="desc">{p.description.substring(0, 100)}...</p>
-                    <a href={p.productUrl} target="_blank" rel="noreferrer">View Product</a>
-                  </div>
+              {loading ? (
+                <p>Loading...</p>
+              ) : products.length === 0 ? (
+                <div className="no-results">
+                  <h3>No results found</h3>
+                  <p>Please try a different keyword or check your spelling.</p>
                 </div>
-              ))}
+              ) : (
+                currentItems.map((p, i) => (
+                  <div key={i} className="product-card">
+                    <img src={p.imageUrl} alt={p.name} />
+                    <div className="product-info">
+                      <h3>{p.name}</h3>
+                      <p className="brand">{p.brand}</p>
+                      <p className="price">{p.price}</p>
+                      {p.rating !== "0.0" && <p className="rating">Rating: {p.rating} ({p.reviewCount} reviews)</p>}
+                      {p.description && <p className="desc">{p.description.substring(0, 100)}...</p>}
+                      <a href={p.productUrl} target="_blank" rel="noreferrer">View Product</a>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
             
             {!loading && products.length > 0 && renderPagination()}
