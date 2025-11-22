@@ -9,6 +9,7 @@ function App() {
   const [spellCheck, setSpellCheck] = useState(null);
   const [topSearches, setTopSearches] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
 
   useEffect(() => {
     fetchProducts();
@@ -90,11 +91,13 @@ function App() {
               type="text"
               value={query}
               onChange={handleInputChange}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setTimeout(() => setIsFocused(false), 200)}
               placeholder="Search for toothbrushes..."
             />
             <button type="submit">Search</button>
           </form>
-          {suggestions.length > 0 && (
+          {isFocused && suggestions.length > 0 && (
             <ul className="autocomplete-list">
               {suggestions.map((s, i) => (
                 <li key={i} onClick={() => handleSuggestionClick(s)}>{s}</li>

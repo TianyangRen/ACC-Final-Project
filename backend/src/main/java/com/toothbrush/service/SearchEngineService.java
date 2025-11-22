@@ -18,7 +18,7 @@ public class SearchEngineService {
     private List<Product> products = new ArrayList<>();
     private Trie vocabularyTrie;
     private Map<String, Integer> searchFrequency = new TreeMap<>(); // Red-Black Tree
-    private static final String CSV_PATH = "d:\\desk\\ACC\\Final Project\\burst_products.csv"; // Adjust path as needed
+    private static final String CSV_PATH = "d:\\desk\\ACC\\Final-Project\\burst_products.csv"; // Adjust path as needed
 
     @PostConstruct
     public void init() {
