@@ -32,6 +32,9 @@ public class SearchEngineService {
             String[] line;
             reader.readNext(); // Skip header
             while ((line = reader.readNext()) != null) {
+                if (line.length < 9) {
+                    continue; // Skip lines that don't have enough columns to avoid ArrayIndexOutOfBoundsException
+                }
                 Product product = new Product();
                 product.setName(line[0]);
                 product.setPrice(line[1]);
