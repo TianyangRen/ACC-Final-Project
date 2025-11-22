@@ -9,24 +9,29 @@ const LoginModal = ({ onClose, onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
+  const [isError, setIsError] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
+    setIsError(false);
 
     if (!email || !password) {
       setMessage('Please fill in all fields');
+      setIsError(true);
       return;
     }
 
     if (!email.includes('@')) {
       setMessage("Please include an '@' in the email address.");
+      setIsError(true);
       return;
     }
 
     if (!isLogin) {
       if (!firstName || !lastName) {
         setMessage('Please fill in all fields');
+        setIsError(true);
         return;
       }
 
@@ -37,16 +42,19 @@ const LoginModal = ({ onClose, onLoginSuccess }) => {
 
       if (!nameRegex.test(firstName) || !nameRegex.test(lastName)) {
         setMessage('First and Last Name must contain only letters (A-Z, a-z).');
+        setIsError(true);
         return;
       }
 
       if (!emailRegex.test(email)) {
         setMessage('Email domain must be gmail, yahoo, hotmail, or outlook with .com, .net, .org, or .ca extension.');
+        setIsError(true);
         return;
       }
 
       if (!passwordRegex.test(password)) {
         setMessage('Password must be 8-32 characters, with at least 1 uppercase, 1 lowercase, and 1 number.');
+        setIsError(true);
         return;
       }
     }
@@ -65,10 +73,12 @@ const LoginModal = ({ onClose, onLoginSuccess }) => {
         onClose();
       } else {
         setMessage('Registration successful! Please login.');
+        setIsError(false);
         setIsLogin(true);
       }
     } catch (err) {
       setMessage(err.response?.data?.message || 'An error occurred');
+      setIsError(true);
     }
   };
 
@@ -135,7 +145,7 @@ const LoginModal = ({ onClose, onLoginSuccess }) => {
           </button>
         </form>
 
-        {message && <p className="message">{message}</p>}
+        {message && <p className={`message ${isError ? 'error' : 'success'}`}>{message}</p>}
         
         <p className="toggle-text">
           {isLogin ? "Don't have an account? " : "Already have an account? "}

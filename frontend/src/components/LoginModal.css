@@ -119,8 +119,15 @@
 .message {
   margin-top: 15px;
   text-align: center;
-  color: #e53e3e;
   font-size: 14px;
+}
+
+.message.error {
+  color: #e53e3e;
+}
+
+.message.success {
+  color: #2f855a;
 }
 
 .toggle-text {
