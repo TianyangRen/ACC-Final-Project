@@ -24,3 +24,7 @@ target/
 # OS
 .DS_Store
 Thumbs.db
+
+# Secrets
+application.properties
+backend/src/main/resources/application.properties
