@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './App.css';
 
@@ -13,7 +13,15 @@ function App() {
   const [sort, setSort] = useState('default');
   const [showNav, setShowNav] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isSortOpen, setIsSortOpen] = useState(false);
+  const sortRef = useRef(null);
   const itemsPerPage = 15;
+
+  const sortOptions = {
+    'default': 'Default',
+    'price_asc': 'Price: Low to High',
+    'price_desc': 'Price: High to Low'
+  };
 
   useEffect(() => {
     let lastScrollY = window.scrollY;
@@ -35,6 +43,16 @@ function App() {
   useEffect(() => {
     fetchProducts();
     fetchTopSearches();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (sortRef.current && !sortRef.current.contains(event.target)) {
+        setIsSortOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const fetchProducts = async (sortOption = sort) => {
@@ -124,6 +142,16 @@ function App() {
     performSearch(word);
   };
 
+  const handleSortOptionClick = (value) => {
+    setSort(value);
+    setIsSortOpen(false);
+    if (query) {
+      performSearch(query, value);
+    } else {
+      fetchProducts(value);
+    }
+  };
+
   // Pagination Logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -179,11 +207,26 @@ function App() {
         <h1>Toothbrush Analyzer</h1>
         <div className="search-container">
           <button className="show-all-btn" onClick={handleShowAll}>All</button>
-          <select value={sort} onChange={handleSortChange} className="sort-select">
-            <option value="default">Default</option>
-            <option value="price_asc">Price: Low to High</option>
-            <option value="price_desc">Price: High to Low</option>
-          </select>
+          
+          <div className="custom-select" ref={sortRef}>
+            <div className="select-selected" onClick={() => setIsSortOpen(!isSortOpen)}>
+              {sortOptions[sort]}
+            </div>
+            {isSortOpen && (
+              <div className="select-items">
+                {Object.entries(sortOptions).map(([key, label]) => (
+                  <div 
+                    key={key} 
+                    className={sort === key ? 'same-as-selected' : ''}
+                    onClick={() => handleSortOptionClick(key)}
+                  >
+                    {label}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <form onSubmit={handleSearch}>
             <input
               type="text"
