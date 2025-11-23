@@ -78,4 +78,22 @@ public class Trie {
             collectWords(entry.getValue(), prefix + entry.getKey(), words);
         }
     }
+
+    public int getFrequency(String word) {
+        TrieNode current = root;
+        for (char c : word.toCharArray()) {
+            TrieNode node = current.children.get(c);
+            if (node == null) {
+                return 0;
+            }
+            current = node;
+        }
+        return current.isEndOfWord ? current.frequency : 0;
+    }
+
+    public List<String> getAllWords() {
+        List<String> words = new ArrayList<>();
+        collectWords(root, "", words);
+        return words;
+    }
 }

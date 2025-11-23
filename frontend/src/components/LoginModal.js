@@ -8,6 +8,7 @@ const LoginModal = ({ onClose, onLoginSuccess }) => {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
 
@@ -131,13 +132,21 @@ const LoginModal = ({ onClose, onLoginSuccess }) => {
 
           <div className="input-group">
             <label>Password</label>
-            <input
-              type="password"
-              placeholder="Please enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="new-password"
-            />
+            <div className="password-wrapper">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Please enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+              />
+              <span 
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? 'Hide' : 'Show'}
+              </span>
+            </div>
           </div>
 
           <button type="submit" className="submit-btn">

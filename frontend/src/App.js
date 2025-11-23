@@ -11,7 +11,7 @@ function App() {
   const [topSearches, setTopSearches] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const [sort, setSort] = useState('default');
+  const [sorts, setSorts] = useState([]);
   const [brands, setBrands] = useState([]);
   const [selectedBrands, setSelectedBrands] = useState([]);
   const [types, setTypes] = useState([]);
@@ -82,10 +82,10 @@ function App() {
     }
   };
 
-  const fetchProducts = async (sortOption = sort, brandFilters = selectedBrands, typeFilters = selectedTypes) => {
+  const fetchProducts = async (sortOptions = sorts, brandFilters = selectedBrands, typeFilters = selectedTypes) => {
     setLoading(true);
     try {
-      const params = { sort: sortOption };
+      const params = { sort: sortOptions.length > 0 ? sortOptions.join(',') : 'default' };
       if (brandFilters.length > 0) {
         params.brands = brandFilters.join(',');
       }
@@ -110,12 +110,12 @@ function App() {
     }
   };
 
-  const performSearch = async (searchQuery, sortOption = sort, brandFilters = selectedBrands, typeFilters = selectedTypes) => {
+  const performSearch = async (searchQuery, sortOptions = sorts, brandFilters = selectedBrands, typeFilters = selectedTypes) => {
     if (!searchQuery) return;
     setLoading(true);
     setSpellCheck(null);
     try {
-      const params = { query: searchQuery, sort: sortOption };
+      const params = { query: searchQuery, sort: sortOptions.length > 0 ? sortOptions.join(',') : 'default' };
       if (brandFilters.length > 0) {
         params.brands = brandFilters.join(',');
       }
@@ -148,20 +148,25 @@ function App() {
   };
 
   const toggleSort = (field) => {
-    let newSort;
-    if (sort === `${field}_asc`) {
-      newSort = `${field}_desc`;
-    } else if (sort === `${field}_desc`) {
-      newSort = 'default';
+    let newSorts = [...sorts];
+    const existingIndex = newSorts.findIndex(s => s.startsWith(field));
+
+    if (existingIndex >= 0) {
+      const currentSort = newSorts[existingIndex];
+      if (currentSort.endsWith('_asc')) {
+        newSorts[existingIndex] = `${field}_desc`;
+      } else {
+        newSorts.splice(existingIndex, 1);
+      }
     } else {
-      newSort = `${field}_asc`;
+      newSorts.push(`${field}_asc`);
     }
     
-    setSort(newSort);
+    setSorts(newSorts);
     if (query) {
-      performSearch(query, newSort);
+      performSearch(query, newSorts);
     } else {
-      fetchProducts(newSort);
+      fetchProducts(newSorts);
     }
   };
 
@@ -171,7 +176,8 @@ function App() {
     setSpellCheck(null);
     setSelectedBrands([]);
     setSelectedTypes([]);
-    fetchProducts(sort, [], []);
+    setSorts([]);
+    fetchProducts([], [], []);
   };
 
   const handleInputChange = async (e) => {
@@ -207,9 +213,9 @@ function App() {
     setSelectedBrands(newBrands);
     
     if (query) {
-      performSearch(query, sort, newBrands);
+      performSearch(query, sorts, newBrands);
     } else {
-      fetchProducts(sort, newBrands);
+      fetchProducts(sorts, newBrands);
     }
   };
 
@@ -223,9 +229,9 @@ function App() {
     setSelectedTypes(newTypes);
     
     if (query) {
-      performSearch(query, sort, selectedBrands, newTypes);
+      performSearch(query, sorts, selectedBrands, newTypes);
     } else {
-      fetchProducts(sort, selectedBrands, newTypes);
+      fetchProducts(sorts, selectedBrands, newTypes);
     }
   };
 
@@ -349,25 +355,28 @@ function App() {
 
           <div className="sort-buttons-group">
             <button 
-              className={`sort-btn ${sort.startsWith('price') ? 'active' : ''}`}
+              className={`sort-btn ${sorts.some(s => s.startsWith('price')) ? 'active' : ''}`}
               onClick={() => toggleSort('price')}
               title="Sort by Price"
             >
-              Price {sort === 'price_asc' ? '↑' : sort === 'price_desc' ? '↓' : ''}
+              Price {sorts.find(s => s.startsWith('price'))?.endsWith('_asc') ? '↑' : sorts.find(s => s.startsWith('price'))?.endsWith('_desc') ? '↓' : ''}
+              {sorts.findIndex(s => s.startsWith('price')) !== -1 && sorts.length > 1 && <span className="sort-priority">{sorts.findIndex(s => s.startsWith('price')) + 1}</span>}
             </button>
             <button 
-              className={`sort-btn ${sort.startsWith('battery') ? 'active' : ''}`}
+              className={`sort-btn ${sorts.some(s => s.startsWith('battery')) ? 'active' : ''}`}
               onClick={() => toggleSort('battery')}
               title="Sort by Battery Life"
             >
-              Battery {sort === 'battery_asc' ? '↑' : sort === 'battery_desc' ? '↓' : ''}
+              Battery {sorts.find(s => s.startsWith('battery'))?.endsWith('_asc') ? '↑' : sorts.find(s => s.startsWith('battery'))?.endsWith('_desc') ? '↓' : ''}
+              {sorts.findIndex(s => s.startsWith('battery')) !== -1 && sorts.length > 1 && <span className="sort-priority">{sorts.findIndex(s => s.startsWith('battery')) + 1}</span>}
             </button>
             <button 
-              className={`sort-btn ${sort.startsWith('waterproof') ? 'active' : ''}`}
+              className={`sort-btn ${sorts.some(s => s.startsWith('waterproof')) ? 'active' : ''}`}
               onClick={() => toggleSort('waterproof')}
               title="Sort by Waterproof Rating"
             >
-              Waterproof {sort === 'waterproof_asc' ? '↑' : sort === 'waterproof_desc' ? '↓' : ''}
+              Waterproof {sorts.find(s => s.startsWith('waterproof'))?.endsWith('_asc') ? '↑' : sorts.find(s => s.startsWith('waterproof'))?.endsWith('_desc') ? '↓' : ''}
+              {sorts.findIndex(s => s.startsWith('waterproof')) !== -1 && sorts.length > 1 && <span className="sort-priority">{sorts.findIndex(s => s.startsWith('waterproof')) + 1}</span>}
             </button>
           </div>
 
@@ -438,12 +447,12 @@ function App() {
                     <img src={p.imageUrl} alt={p.name} />
                     <div className="product-info">
                       <h3>{p.name}</h3>
-                      <p className="brand">
-                        {p.brand}
-                        {p.toothbrushType && ` | ${p.toothbrushType}`}
-                        {p.batteryLife && ` | Battery: ${p.batteryLife} Days`}
-                        {p.waterproofRating && ` | ${p.waterproofRating}`}
-                      </p>
+                      <p className="brand">{p.brand}</p>
+                      <div className="product-specs">
+                        {p.toothbrushType && <span className="spec-tag type">{p.toothbrushType}</span>}
+                        {p.batteryLife && <span className="spec-tag battery">{p.batteryLife} Days</span>}
+                        {p.waterproofRating && <span className="spec-tag waterproof">{p.waterproofRating}</span>}
+                      </div>
                       <p className="price">{p.price}</p>
                       {p.rating !== "0.0" && <p className="rating">Rating: {p.rating} ({p.reviewCount} reviews)</p>}
                       {p.description && <p className="desc">{p.description.substring(0, 100)}...</p>}

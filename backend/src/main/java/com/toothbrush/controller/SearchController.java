@@ -28,7 +28,7 @@ public class SearchController {
 
     @GetMapping("/products")
     public List<Product> getAllProducts(
-            @RequestParam(required = false, defaultValue = "default") String sort,
+            @RequestParam(required = false, defaultValue = "default") List<String> sort,
             @RequestParam(required = false) List<String> brands,
             @RequestParam(required = false) List<String> types) {
         return searchService.getAllProducts(sort, brands, types);
@@ -37,7 +37,7 @@ public class SearchController {
     @GetMapping("/search")
     public List<Product> search(
             @RequestParam String query, 
-            @RequestParam(required = false, defaultValue = "default") String sort,
+            @RequestParam(required = false, defaultValue = "default") List<String> sort,
             @RequestParam(required = false) List<String> brands,
             @RequestParam(required = false) List<String> types) {
         return searchService.searchProducts(query, sort, brands, types);

@@ -95,7 +95,7 @@ public class SearchEngineService {
                 .collect(Collectors.toList());
     }
 
-    public List<Product> getAllProducts(String sort, List<String> brands, List<String> types) {
+    public List<Product> getAllProducts(List<String> sort, List<String> brands, List<String> types) {
         List<Product> all = products.stream()
                 .filter(p -> brands == null || brands.isEmpty() || brands.contains(p.getBrand()))
                 .filter(p -> types == null || types.isEmpty() || types.contains(p.getToothbrushType()))
@@ -246,7 +246,7 @@ public class SearchEngineService {
     }
 
     // Task 5 & 6: Page Ranking & Inverted Indexing
-    public List<Product> searchProducts(String keyword, String sort, List<String> brands, List<String> types) {
+    public List<Product> searchProducts(String keyword, List<String> sort, List<String> brands, List<String> types) {
         trackSearch(keyword);
         String lowerKeyword = keyword.toLowerCase();
         String[] searchWords = lowerKeyword.split("\\W+"); // Split query into words
@@ -369,19 +369,49 @@ public class SearchEngineService {
         return 0;
     }
 
-    private void applySorting(List<Product> products, String sort) {
-        if ("price_asc".equals(sort)) {
-            products.sort(Comparator.comparingDouble(this::parsePrice));
-        } else if ("price_desc".equals(sort)) {
-            products.sort(Comparator.comparingDouble(this::parsePrice).reversed());
-        } else if ("battery_asc".equals(sort)) {
-            products.sort(Comparator.comparingInt(this::parseBatteryLife));
-        } else if ("battery_desc".equals(sort)) {
-            products.sort(Comparator.comparingInt(this::parseBatteryLife).reversed());
-        } else if ("waterproof_asc".equals(sort)) {
-            products.sort(Comparator.comparingInt(this::getWaterproofLevel));
-        } else if ("waterproof_desc".equals(sort)) {
-            products.sort(Comparator.comparingInt(this::getWaterproofLevel).reversed());
+    private void applySorting(List<Product> products, List<String> sorts) {
+        if (sorts == null || sorts.isEmpty() || (sorts.size() == 1 && "default".equals(sorts.get(0)))) {
+            return;
+        }
+
+        List<String> flatSorts = new ArrayList<>();
+        for (String s : sorts) {
+            if (s.contains(",")) {
+                flatSorts.addAll(Arrays.asList(s.split(",")));
+            } else {
+                flatSorts.add(s);
+            }
+        }
+
+        Comparator<Product> comparator = null;
+
+        for (String sort : flatSorts) {
+            Comparator<Product> currentComparator = null;
+            if ("price_asc".equals(sort)) {
+                currentComparator = Comparator.comparingDouble(this::parsePrice);
+            } else if ("price_desc".equals(sort)) {
+                currentComparator = Comparator.comparingDouble(this::parsePrice).reversed();
+            } else if ("battery_asc".equals(sort)) {
+                currentComparator = Comparator.comparingInt(this::parseBatteryLife);
+            } else if ("battery_desc".equals(sort)) {
+                currentComparator = Comparator.comparingInt(this::parseBatteryLife).reversed();
+            } else if ("waterproof_asc".equals(sort)) {
+                currentComparator = Comparator.comparingInt(this::getWaterproofLevel);
+            } else if ("waterproof_desc".equals(sort)) {
+                currentComparator = Comparator.comparingInt(this::getWaterproofLevel).reversed();
+            }
+
+            if (currentComparator != null) {
+                if (comparator == null) {
+                    comparator = currentComparator;
+                } else {
+                    comparator = comparator.thenComparing(currentComparator);
+                }
+            }
+        }
+
+        if (comparator != null) {
+            products.sort(comparator);
         }
     }
 }
