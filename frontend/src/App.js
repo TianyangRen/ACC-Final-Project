@@ -14,21 +14,18 @@ function App() {
   const [sort, setSort] = useState('default');
   const [brands, setBrands] = useState([]);
   const [selectedBrands, setSelectedBrands] = useState([]);
+  const [types, setTypes] = useState([]);
+  const [selectedTypes, setSelectedTypes] = useState([]);
   const [showNav, setShowNav] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [isBrandOpen, setIsBrandOpen] = useState(false);
+  const [isTypeOpen, setIsTypeOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [user, setUser] = useState(null);
-  const sortRef = useRef(null);
   const brandRef = useRef(null);
+  const typeRef = useRef(null);
   const itemsPerPage = 15;
-
-  const sortOptions = {
-    'default': 'Price: Default',
-    'price_asc': 'Price: Low to High',
-    'price_desc': 'Price: High to Low'
-  };
 
   useEffect(() => {
     let lastScrollY = window.scrollY;
@@ -51,15 +48,16 @@ function App() {
     fetchProducts();
     fetchTopSearches();
     fetchBrands();
+    fetchTypes();
   }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (sortRef.current && !sortRef.current.contains(event.target)) {
-        setIsSortOpen(false);
-      }
       if (brandRef.current && !brandRef.current.contains(event.target)) {
         setIsBrandOpen(false);
+      }
+      if (typeRef.current && !typeRef.current.contains(event.target)) {
+        setIsTypeOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -75,12 +73,24 @@ function App() {
     }
   };
 
-  const fetchProducts = async (sortOption = sort, brandFilters = selectedBrands) => {
+  const fetchTypes = async () => {
+    try {
+      const res = await axios.get('http://localhost:8080/api/types');
+      setTypes(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchProducts = async (sortOption = sort, brandFilters = selectedBrands, typeFilters = selectedTypes) => {
     setLoading(true);
     try {
       const params = { sort: sortOption };
       if (brandFilters.length > 0) {
         params.brands = brandFilters.join(',');
+      }
+      if (typeFilters.length > 0) {
+        params.types = typeFilters.join(',');
       }
       const res = await axios.get(`http://localhost:8080/api/products`, { params });
       setProducts(res.data);
@@ -100,7 +110,7 @@ function App() {
     }
   };
 
-  const performSearch = async (searchQuery, sortOption = sort, brandFilters = selectedBrands) => {
+  const performSearch = async (searchQuery, sortOption = sort, brandFilters = selectedBrands, typeFilters = selectedTypes) => {
     if (!searchQuery) return;
     setLoading(true);
     setSpellCheck(null);
@@ -108,6 +118,9 @@ function App() {
       const params = { query: searchQuery, sort: sortOption };
       if (brandFilters.length > 0) {
         params.brands = brandFilters.join(',');
+      }
+      if (typeFilters.length > 0) {
+        params.types = typeFilters.join(',');
       }
       // 1. Search
       const res = await axios.get(`http://localhost:8080/api/search`, { params });
@@ -134,8 +147,16 @@ function App() {
     performSearch(query);
   };
 
-  const handleSortChange = (e) => {
-    const newSort = e.target.value;
+  const toggleSort = (field) => {
+    let newSort;
+    if (sort === `${field}_asc`) {
+      newSort = `${field}_desc`;
+    } else if (sort === `${field}_desc`) {
+      newSort = 'default';
+    } else {
+      newSort = `${field}_asc`;
+    }
+    
     setSort(newSort);
     if (query) {
       performSearch(query, newSort);
@@ -149,7 +170,8 @@ function App() {
     setSuggestions([]);
     setSpellCheck(null);
     setSelectedBrands([]);
-    fetchProducts(sort, []);
+    setSelectedTypes([]);
+    fetchProducts(sort, [], []);
   };
 
   const handleInputChange = async (e) => {
@@ -175,16 +197,6 @@ function App() {
     performSearch(word);
   };
 
-  const handleSortOptionClick = (value) => {
-    setSort(value);
-    setIsSortOpen(false);
-    if (query) {
-      performSearch(query, value);
-    } else {
-      fetchProducts(value);
-    }
-  };
-
   const handleBrandToggle = (brand) => {
     let newBrands;
     if (selectedBrands.includes(brand)) {
@@ -198,6 +210,22 @@ function App() {
       performSearch(query, sort, newBrands);
     } else {
       fetchProducts(sort, newBrands);
+    }
+  };
+
+  const handleTypeToggle = (type) => {
+    let newTypes;
+    if (selectedTypes.includes(type)) {
+      newTypes = selectedTypes.filter(t => t !== type);
+    } else {
+      newTypes = [...selectedTypes, type];
+    }
+    setSelectedTypes(newTypes);
+    
+    if (query) {
+      performSearch(query, sort, selectedBrands, newTypes);
+    } else {
+      fetchProducts(sort, selectedBrands, newTypes);
     }
   };
 
@@ -292,23 +320,55 @@ function App() {
             )}
           </div>
 
-          <div className="custom-select" ref={sortRef}>
-            <div className="select-selected" onClick={() => setIsSortOpen(!isSortOpen)}>
-              {sortOptions[sort]}
+          <div className="custom-select" ref={typeRef}>
+            <div className="select-selected" onClick={() => setIsTypeOpen(!isTypeOpen)}>
+              {selectedTypes.length > 0 ? `${selectedTypes.length} Types` : 'Types: All'}
             </div>
-            {isSortOpen && (
-              <div className="select-items">
-                {Object.entries(sortOptions).map(([key, label]) => (
+            {isTypeOpen && (
+              <div className="select-items brand-select-items">
+                {types.map((type) => (
                   <div 
-                    key={key} 
-                    className={sort === key ? 'same-as-selected' : ''}
-                    onClick={() => handleSortOptionClick(key)}
+                    key={type} 
+                    className="brand-option"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleTypeToggle(type);
+                    }}
                   >
-                    {label}
+                    <input 
+                      type="checkbox" 
+                      checked={selectedTypes.includes(type)} 
+                      readOnly 
+                    />
+                    <span>{type}</span>
                   </div>
                 ))}
               </div>
             )}
+          </div>
+
+          <div className="sort-buttons-group">
+            <button 
+              className={`sort-btn ${sort.startsWith('price') ? 'active' : ''}`}
+              onClick={() => toggleSort('price')}
+              title="Sort by Price"
+            >
+              Price {sort === 'price_asc' ? '↑' : sort === 'price_desc' ? '↓' : ''}
+            </button>
+            <button 
+              className={`sort-btn ${sort.startsWith('battery') ? 'active' : ''}`}
+              onClick={() => toggleSort('battery')}
+              title="Sort by Battery Life"
+            >
+              Battery {sort === 'battery_asc' ? '↑' : sort === 'battery_desc' ? '↓' : ''}
+            </button>
+            <button 
+              className={`sort-btn ${sort.startsWith('waterproof') ? 'active' : ''}`}
+              onClick={() => toggleSort('waterproof')}
+              title="Sort by Waterproof Rating"
+            >
+              Waterproof {sort === 'waterproof_asc' ? '↑' : sort === 'waterproof_desc' ? '↓' : ''}
+            </button>
           </div>
 
           <form onSubmit={handleSearch}>
@@ -378,7 +438,12 @@ function App() {
                     <img src={p.imageUrl} alt={p.name} />
                     <div className="product-info">
                       <h3>{p.name}</h3>
-                      <p className="brand">{p.brand}</p>
+                      <p className="brand">
+                        {p.brand}
+                        {p.toothbrushType && ` | ${p.toothbrushType}`}
+                        {p.batteryLife && ` | Battery: ${p.batteryLife} Days`}
+                        {p.waterproofRating && ` | ${p.waterproofRating}`}
+                      </p>
                       <p className="price">{p.price}</p>
                       {p.rating !== "0.0" && <p className="rating">Rating: {p.rating} ({p.reviewCount} reviews)</p>}
                       {p.description && <p className="desc">{p.description.substring(0, 100)}...</p>}

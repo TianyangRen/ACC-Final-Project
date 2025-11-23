@@ -77,6 +77,8 @@
   justify-content: space-between;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   transition: all 0.2s ease;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .select-selected:hover {
@@ -590,4 +592,38 @@ button:active {
 
 .brand-option span {
   flex-grow: 1;
+}
+
+.sort-buttons-group {
+  display: flex;
+  gap: 5px;
+}
+
+.sort-btn {
+  padding: 10px 15px;
+  background-color: #fff;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s;
+  min-width: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+}
+
+.sort-btn:hover {
+  background-color: #f8f9fa;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.sort-btn.active {
+  background-color: #61dafb;
+  color: #282c34;
+  border-color: #61dafb;
 }

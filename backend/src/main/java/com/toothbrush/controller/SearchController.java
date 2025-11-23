@@ -21,19 +21,26 @@ public class SearchController {
         return searchService.getAllBrands();
     }
 
+    @GetMapping("/types")
+    public List<String> getToothbrushTypes() {
+        return searchService.getAllToothbrushTypes();
+    }
+
     @GetMapping("/products")
     public List<Product> getAllProducts(
             @RequestParam(required = false, defaultValue = "default") String sort,
-            @RequestParam(required = false) List<String> brands) {
-        return searchService.getAllProducts(sort, brands);
+            @RequestParam(required = false) List<String> brands,
+            @RequestParam(required = false) List<String> types) {
+        return searchService.getAllProducts(sort, brands, types);
     }
 
     @GetMapping("/search")
     public List<Product> search(
             @RequestParam String query, 
             @RequestParam(required = false, defaultValue = "default") String sort,
-            @RequestParam(required = false) List<String> brands) {
-        return searchService.searchProducts(query, sort, brands);
+            @RequestParam(required = false) List<String> brands,
+            @RequestParam(required = false) List<String> types) {
+        return searchService.searchProducts(query, sort, brands, types);
     }
 
     @GetMapping("/spellcheck")

@@ -32,16 +32,19 @@ public class SearchEngineService {
             String[] line;
             reader.readNext(); // Skip header
             while ((line = reader.readNext()) != null) {
-                if (line.length < 5) {
+                if (line.length < 8) {
                     continue; // Skip lines that don't have enough columns
                 }
                 Product product = new Product();
-                // New CSV Format: Brand, Title, Price, Image URL, Product URL
+                // CSV Format: Brand, Title, Price, Image URL, Product URL, Battery_Life, Waterproof_Rating, Toothbrush_Type
                 product.setBrand(line[0]);
                 product.setName(line[1]);
                 product.setPrice(line[2]);
                 product.setImageUrl(line[3]);
                 product.setProductUrl(line[4]);
+                product.setBatteryLife(line[5]);
+                product.setWaterproofRating(line[6]);
+                product.setToothbrushType(line[7]);
                 
                 // Default values for missing fields
                 product.setReviewCount("0");
@@ -81,16 +84,24 @@ public class SearchEngineService {
                 .collect(Collectors.toList());
     }
 
-    public List<Product> getAllProducts(String sort, List<String> brands) {
+    public List<String> getAllToothbrushTypes() {
+        return products.stream()
+                .map(Product::getToothbrushType)
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+    }
+
+    public List<Product> getAllProducts(String sort, List<String> brands, List<String> types) {
         List<Product> all = products.stream()
                 .filter(p -> brands == null || brands.isEmpty() || brands.contains(p.getBrand()))
+                .filter(p -> types == null || types.isEmpty() || types.contains(p.getToothbrushType()))
                 .collect(Collectors.toList());
 
-        if ("price_asc".equals(sort)) {
-            all.sort(Comparator.comparingDouble(this::parsePrice));
-        } else if ("price_desc".equals(sort)) {
-            all.sort(Comparator.comparingDouble(this::parsePrice).reversed());
-        }
+        applySorting(all, sort);
         return all;
     }
 
@@ -235,7 +246,7 @@ public class SearchEngineService {
     }
 
     // Task 5 & 6: Page Ranking & Inverted Indexing
-    public List<Product> searchProducts(String keyword, String sort, List<String> brands) {
+    public List<Product> searchProducts(String keyword, String sort, List<String> brands, List<String> types) {
         trackSearch(keyword);
         String lowerKeyword = keyword.toLowerCase();
         String[] searchWords = lowerKeyword.split("\\W+"); // Split query into words
@@ -282,6 +293,17 @@ public class SearchEngineService {
             }
         }
 
+        // Filter by toothbrush type if provided
+        if (types != null && !types.isEmpty()) {
+            candidateSet = candidateSet.stream()
+                    .filter(p -> types.contains(p.getToothbrushType()))
+                    .collect(Collectors.toSet());
+            
+            if (candidateSet.isEmpty()) {
+                return new ArrayList<>();
+            }
+        }
+
         // 2. Use Boyer-Moore to rank them by frequency (Task 5)
         // We sum the occurrences of EACH search word in the product name
         Map<Product, Integer> productScores = new HashMap<>();
@@ -314,11 +336,7 @@ public class SearchEngineService {
                 .collect(Collectors.toList());
 
         // Apply additional sorting if requested
-        if ("price_asc".equals(sort)) {
-            results.sort(Comparator.comparingDouble(this::parsePrice));
-        } else if ("price_desc".equals(sort)) {
-            results.sort(Comparator.comparingDouble(this::parsePrice).reversed());
-        }
+        applySorting(results, sort);
 
         return results;
     }
@@ -329,6 +347,41 @@ public class SearchEngineService {
             return Double.parseDouble(priceStr);
         } catch (NumberFormatException e) {
             return 0.0;
+        }
+    }
+
+    private int parseBatteryLife(Product p) {
+        try {
+            String batteryStr = p.getBatteryLife().trim();
+            return Integer.parseInt(batteryStr);
+        } catch (NumberFormatException | NullPointerException e) {
+            return 0;
+        }
+    }
+
+    private int getWaterproofLevel(Product p) {
+        String rating = p.getWaterproofRating();
+        if (rating == null) return 0;
+        rating = rating.trim().toUpperCase();
+        if (rating.contains("IPX8")) return 3;
+        if (rating.contains("IPX7")) return 2;
+        if (rating.contains("IP")) return 1;
+        return 0;
+    }
+
+    private void applySorting(List<Product> products, String sort) {
+        if ("price_asc".equals(sort)) {
+            products.sort(Comparator.comparingDouble(this::parsePrice));
+        } else if ("price_desc".equals(sort)) {
+            products.sort(Comparator.comparingDouble(this::parsePrice).reversed());
+        } else if ("battery_asc".equals(sort)) {
+            products.sort(Comparator.comparingInt(this::parseBatteryLife));
+        } else if ("battery_desc".equals(sort)) {
+            products.sort(Comparator.comparingInt(this::parseBatteryLife).reversed());
+        } else if ("waterproof_asc".equals(sort)) {
+            products.sort(Comparator.comparingInt(this::getWaterproofLevel));
+        } else if ("waterproof_desc".equals(sort)) {
+            products.sort(Comparator.comparingInt(this::getWaterproofLevel).reversed());
         }
     }
 }

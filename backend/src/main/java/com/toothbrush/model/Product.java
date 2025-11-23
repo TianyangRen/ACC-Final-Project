@@ -10,6 +10,9 @@ public class Product {
     private String rating;
     private String inStock;
     private String description;
+    private String batteryLife;
+    private String waterproofRating;
+    private String toothbrushType;
 
     // Getters and Setters
     public String getName() { return name; }
@@ -38,4 +41,13 @@ public class Product {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    public String getBatteryLife() { return batteryLife; }
+    public void setBatteryLife(String batteryLife) { this.batteryLife = batteryLife; }
+
+    public String getWaterproofRating() { return waterproofRating; }
+    public void setWaterproofRating(String waterproofRating) { this.waterproofRating = waterproofRating; }
+
+    public String getToothbrushType() { return toothbrushType; }
+    public void setToothbrushType(String toothbrushType) { this.toothbrushType = toothbrushType; }
 }
