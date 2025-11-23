@@ -79,6 +79,16 @@
     3.  搜索时，只需在 Trie 中找到单词对应的节点，即可直接获取该节点存储的所有产品引用列表。
 *   **关键类**: `TrieNode`, `Trie.insert`, `Trie.searchReferences`
 
+### 3.7 正则表达式 (Regular Expressions)
+*   **目标**: 用于数据清洗、文本分词以及前端表单验证。
+*   **后端应用 (`SearchEngineService.java`)**:
+    *   **分词**: 使用 `\\W+` (非单词字符) 将搜索查询和产品名称分割成单词数组，用于构建 Trie 和搜索。
+    *   **价格解析**: 使用 `[^\\d.]` (非数字和非小数点) 清洗价格字符串，提取数值进行排序。
+*   **前端应用 (`LoginModal.js`)**:
+    *   **姓名验证**: `/^[a-zA-Z]+$/` 确保姓名只包含字母。
+    *   **邮箱验证**: `/^[a-zA-Z0-9._%+-]+@(gmail|yahoo|hotmail|outlook)\.(com|net|org|ca)$/` 限制特定域名的邮箱注册。
+    *   **密码强度**: `/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,32}$/` 强制密码包含大小写字母和数字，长度8-32位。
+
 ## 4. 后端 API 接口说明
 
 | 方法 | 路径 | 描述 | 参数 |
@@ -102,7 +112,6 @@ backend/
 │   └── util/             # 工具类与算法实现
 │       ├── BoyerMoore.java   # 字符串搜索算法
 │       ├── EditDistance.java # 编辑距离算法
-│       ├── KMP.java          # KMP 算法 (备用)
 │       ├── Trie.java         # 字典树实现
 │       └── TrieNode.java     # 字典树节点
 └── pom.xml               # Maven 依赖配置
