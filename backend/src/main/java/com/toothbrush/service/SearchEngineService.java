@@ -7,7 +7,6 @@ import com.toothbrush.util.*;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -153,7 +152,7 @@ public class SearchEngineService {
                 generateCombinations(allCandidates, 0, "", validPhrases);
                 
                 if (!validPhrases.isEmpty()) {
-                    suggestions.add(validPhrases.get(0));
+                    suggestions.add(validPhrases.get(0));  // Keep only the first valid suggestion
                 }
             } else {
                 // Single word suggestion
@@ -162,7 +161,7 @@ public class SearchEngineService {
                     .map(w -> new AbstractMap.SimpleEntry<>(w, EditDistance.calculate(finalWord, w)))
                     .filter(entry -> entry.getValue() <= 2)
                     .sorted(Map.Entry.comparingByValue())
-                    .limit(5)
+                    .limit(5)  // Top 5 candidates
                     .map(Map.Entry::getKey)
                     .collect(Collectors.toList());
             }
@@ -173,7 +172,7 @@ public class SearchEngineService {
     }
 
     private void generateCombinations(List<List<String>> lists, int depth, String current, List<String> result) {
-        if (!result.isEmpty()) return; // Found one, stop (Greedy)
+        if (!result.isEmpty()) return; // Found one, stop (Greedy + Pruning)
 
         if (depth == lists.size()) {
             if (hasMatches(current.trim())) {
@@ -207,7 +206,7 @@ public class SearchEngineService {
                 candidateSet.addAll(wordProducts);
                 firstWord = false;
             } else {
-                candidateSet.retainAll(wordProducts);
+                candidateSet.retainAll(wordProducts);  // Intersection
             }
 
             if (candidateSet.isEmpty()) {
@@ -405,7 +404,7 @@ public class SearchEngineService {
                 if (comparator == null) {
                     comparator = currentComparator;
                 } else {
-                    comparator = comparator.thenComparing(currentComparator);
+                    comparator = comparator.thenComparing(currentComparator);  // Chain comparators
                 }
             }
         }
